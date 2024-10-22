@@ -1,74 +1,117 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Detail from "./Detail";
+import Movie from "./component/Movie";  // Movie 컴포넌트 가져오기
+import Curation from "./component/Curation";
 
-const API_KEY = process.env.REACT_APP_TMDB_API_KEY; // 환경 변수에서 API 키 가져오기
-const API_URL = `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=en-US&page=1`;
+const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
 function App() {
-  //movies 의 상태를 초기화 후 영화 데이터를 저장할 상태를 정의함
-  const [movies, setMovies] = useState([]);
+  const [nowPlaying, setNowPlaying] = useState([]);
+  const [popular, setPopular] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
+  const [topRated, setTopRated] = useState([]);
+  const [loading, setLoading] = useState(true); // 로딩 상태 추가
 
-  // 컴포넌트 렌더링 
+  const fetchMovies = async () => {
+    setLoading(true);
+    try {
+      const nowPlayingResponse = await fetch(
+        `https://api.themoviedb.org/3/movie/now_playing?api_key=${API_KEY}&language=ko-KR`
+      );
+      const popularResponse = await fetch(
+        `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=ko-KR`
+      );
+      const upcomingResponse = await fetch(
+        `https://api.themoviedb.org/3/movie/upcoming?api_key=${API_KEY}&language=ko-KR`
+      );
+      const topRatedResponse = await fetch(
+        `https://api.themoviedb.org/3/movie/top_rated?api_key=${API_KEY}&language=ko-KR`
+      );
+      const nowPlayingData = await nowPlayingResponse.json();
+      const popularData = await popularResponse.json();
+      const upcomingData = await upcomingResponse.json();
+      const topRatedData = await topRatedResponse.json();
+
+
+      // 중복제거
+      const movieIds = new Set();
+      const filterUniqueMovies = (movies) =>
+        movies.filter((movie)=>{
+          if(!movieIds.has(movie.id)) {
+            movieIds.add(movie.id);
+            return true;
+          }
+          return false;
+        });
+
+     // 중복을 제거한 결과를 상태에 저장
+     setNowPlaying(filterUniqueMovies(nowPlayingData.results || []));
+     setPopular(filterUniqueMovies(popularData.results || []));
+     setUpcoming(filterUniqueMovies(upcomingData.results || []));
+     setTopRated(filterUniqueMovies(topRatedData.results || []));
+    } catch (error) {
+      console.error("Error fetching movies:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        // 1. API 에서 뎅터를 가져옴
-        const response = await fetch(API_URL);
-        // 2. 응답 데이터를 json 형식으로 변환하해서 data에 담음
-        const data = await response.json();
-        // 3. data를 movies 상태에 저장
-        setMovies(data.results); // 영화 데이터를 상태에 저장
-      } catch (error) {
-        console.error("Error fetching movies:", error);
-      }
-    };
-
-    fetchMovies(); // 함수 호출
+    fetchMovies();
   }, []);
+
 
   return (
     <Router>
       <Routes>
-        <Route path="/"
-        element={
-          <div>
-      <h1>Popular Movies</h1>
-      <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {movies.map((movie) => (
-          // 영화를 key 값에 따라 렌더링
-          // movies 는 API 에서 받아온 영화 데이터 배열
-          // movie 는 영화 객체로 map() 함수가 movies 배열을 각 항목을 순회하면서 넘겨주는 값.
+        <Route
+          path="/"
+          element={
+            loading ? (
+              <div>로딩 중...</div>
+            ) : (
+            <div>
+            {/* 각 카테고리별로 타이틀과 더보기 버튼 추가 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>현재 상영작</h2>
+              <Link to="/curation/now_playing">
+                <button>더보기</button>
+              </Link>
+            </div>
+            <Movie movies={nowPlaying} />
 
-          <div key={movie.id} style={{ margin: "20px", width: "200px" }}>
-            <img
-              src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} // 이미지 포스터
-              alt={movie.title}
-              style={{ width: "100%" }}
-            />
-            <h2>{movie.title}</h2> {/* 영화 제목 */}
-            <p>
-              <strong>Rating:</strong> {movie.vote_average} / 10
-            </p>{" "}
-            {/* 영화 평점 */}
-            <p>
-              <strong>Release Date:</strong> {movie.release_date}
-            </p>{" "}
-            {/* 출시일 */}
-            <Link to={`/movie/${movie.id}`}>
-              <button>상세보기</button>
-            </Link>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>인기작</h2>
+              <Link to="/curation/popular">
+                <button>더보기</button>
+              </Link>
+            </div>
+            <Movie movies={popular} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>최고 평가작</h2>
+              <Link to="/curation/top_rated">
+                <button>더보기</button>
+              </Link>
+            </div>
+            <Movie movies={topRated} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>개봉 예정작</h2>
+              <Link to="/curation/upcoming">
+                <button>더보기</button>
+              </Link>
+            </div>
+            <Movie movies={upcoming} />
           </div>
-        ))}
-      </div>
-    </div>
-        }
+        )
+          }
         />
         <Route path="/movie/:id" element={<Detail />} />
-
+        <Route path="/curation/:category" element={<Curation />} />  {/* Curation 페이지 경로 설정 */}
       </Routes>
     </Router>
-    
   );
 }
 
