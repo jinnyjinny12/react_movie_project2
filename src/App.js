@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Detail from "./Detail";
 import Movie from "./component/Movie";  // Movie 컴포넌트 가져오기
-import Curation from "./component/Curation";
+import Curation from "./Curation";
 
 const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
