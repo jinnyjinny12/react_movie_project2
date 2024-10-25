@@ -74,3 +74,15 @@
    ```bash
    git clone https://github.com/your-repo/movie-community.git
    cd movie-community
+   
+2. **env파일 추가하기**
+  - .env 파일을 생성하고 Firebase 설정 및 TMDB API 키를 추가합니다.
+ 
+3. **프로젝트 빌드 및 실행**
+    ```bash
+    npm install
+    npm start
+
+4. **v파이어베이스 설정**
+  - Firebase Console에서 프로젝트를 생성하고 필요한 Firestore와 Storage 서비스를 설정합니다.
+
